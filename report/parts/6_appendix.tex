@@ -1,3 +1,61 @@
 \appendix
 \section{Appendix}
-Code:
+\subsection{Data}\label{sec:data_appendix}
+
+\subsubsection{Original Data}
+
+\cite{cnfdb} \textbf{Fire Data:}
+\begin{itemize}
+    \item \texttt{NFDBFIREID}, \texttt{FIRE\_ID}, \texttt{FIRENAME}: unique identifiers and name
+    \item \texttt{SRC\_AGENCY}, \texttt{NAT\_PARK}: reporting agency and park indicator
+    \item \texttt{LATITUDE}, \texttt{LONGITUDE}: fire location
+    \item \texttt{YEAR}, \texttt{MONTH}, \texttt{DAY}: ignition date components
+    \item \texttt{REP\_DATE}, \texttt{OUT\_DATE}: reported and extinguished dates
+    \item \texttt{SIZE\_HA}: fire size (hectares)
+    \item \texttt{CAUSE}: ignition cause (e.g. human, natural)
+    \item \texttt{FIRE\_TYPE}: fire classification
+    \item \texttt{RESPONSE}: management response level
+    \item \texttt{PROTZONE}: protection zone classification
+    \item \texttt{MORE\_INFO}: additional notes
+    \item \texttt{FID}, \texttt{the\_geom}: internal ID and geometry
+\end{itemize}
+
+\cite{evacdb} \textbf{Evacuation Data:}
+\begin{itemize}
+    \item \texttt{EvacID}: unique evacuation identifier
+    \item \texttt{Year}, \texttt{Province}, \texttt{Region}: temporal and geographic context
+    \item \texttt{Location}, \texttt{Lat}, \texttt{Long}: evacuation location
+    \item \texttt{Population}, \texttt{PopulationNotes}: affected population
+    \item \texttt{FN\_Reserve}, \texttt{FN\_Reserve\_num}: First Nations reserve indicators
+    \item \texttt{EvacSize}: evacuation scale
+    \item \texttt{IssueDate}, \texttt{EndDate}: evacuation duration
+    \item \texttt{EvacReason}: stated cause of evacuation
+    \item \texttt{FireSource}, \texttt{FireIgnit}, \texttt{FireSize}, \texttt{RepDOY}: linked fire attributes
+    \item \texttt{Group}: grouping/category field
+    \item \texttt{matched}: indicator for linkage to fire dataset
+\end{itemize}
+
+\cite{reservesdb} \textbf{First Nations Reserve Data:}
+\begin{itemize}
+    \item \texttt{geometry}: spatial polygon defining reserve boundaries
+    \item \texttt{NAME1}–\texttt{NAME5}, \texttt{LANGUAGE1}–\texttt{LANGUAGE5}: reserve names in multiple languages
+    \item \texttt{ALTYPE}: reserve type (e.g. Indian Reserve, Land Claim)
+    \item \texttt{JUR1}–\texttt{JUR4}: jurisdictional information
+    \item \texttt{ALCODE}, \texttt{NID}: identifiers
+    \item \texttt{PROVIDER}, \texttt{DATASETNAM}, \texttt{SPECVERS}: dataset metadata
+    \item \texttt{CREDATE}, \texttt{REVDATE}: creation and revision dates
+    \item \texttt{ACCURACY}, \texttt{ACQTECH}, \texttt{METACOVER}: data quality and acquisition details
+    \item \texttt{WEBREF}: external reference link
+\end{itemize}
+
+\subsubsection{Data Cleaning \& Joining}
+
+Fire and evacuation records were linked using a nearest-neighbour heuristic in both time and space. For each evacuation, candidate fires were restricted to those reported within a $\pm14$ day window of the evacuation issue date, and the closest such fire (in geodesic distance) was selected, provided it lay within 100\,km. Evacuations without a valid match under these criteria were discarded, resulting in approximately three quarters of evacuations being retained. However, this introduces potential bias: unmatched evacuations were disproportionately associated with First Nations reserves, so their removal may attenuate estimated effects related to Indigenous proximity. This is a limitation of this matching method that could be investigated by further work.
+
+Geospatial joins were then used to augment fire records with First Nations reserve features. Fires were tagged with a binary \texttt{fn\_indicator} based on whether their location intersected a reserve polygon, and continuous measures such as \texttt{dist\_to\_fn\_km} (distance to the nearest reserve) and \texttt{n\_fn\_20km} (count of reserves within a 20\,km radius) were computed using projected geometries.
+
+The resulting fire-level dataset was aggregated so that multiple evacuations linked to the same fire contributed summary statistics (e.g. counts, total population, and mean match distance), and missing values for unmatched fires were filled with zeros or \texttt{False} as appropriate.
+
+Finally, categorical variables were simplified and standardised, continuous variables (notably fire size) were log-transformed and normalised, and irrelevant fields were removed. Three rows causing numerical instability in posterior inference (due to near-deterministic predictions) were excluded as a pragmatic step.
+
+\section{Trace \& Rank Plots}
