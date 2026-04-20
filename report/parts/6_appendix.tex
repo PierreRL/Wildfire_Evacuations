@@ -1,17 +1,20 @@
 \appendix
 \section*{Appendix}
 \addcontentsline{toc}{section}{Appendix}
-\section{Positionality and Land Acknowledgement Statement}
-I am a white male settler...
+\section{Land Acknowledgement Statement and Positionality}
+\textbf{Land Acknowledgement:}
+I would like to recognise that I live, work and play on the land of the Musqueam First Nation, who have occupied this land since time immemorial. I am visiting to study in a system enabled by colonialism and racism, from which I profit. I seek to learn more about the systems I profit from and how I might help during my studies in land I do not stake claim to.\\
+\textbf{Positionality:}
+I am a white settler visiting Canada to study. I bring a foreign perspective to a local issue. Indeed, wildfires do not exist where I come from. Further, I do not understand many of the nuances associated with wildfires and particularly with the struggles of FN peoples in their ancestral home. This study has been a part of me attempting to learn more through my studies.
 
 \section{AI Usage Statement}
-ChatGPT was used at various points in this study for finding relevant sources, debugging code, suggesting modelling ideas and code for generating plots. It was not used for writing, analysis or used to directly generate any results. All code was also initially written and run by me directly, with AI assistance only used for debugging or understanding library API's.
+ChatGPT was used at various points in this study for finding relevant sources, debugging code, suggesting modelling ideas and code for generating plots. It was not used for writing, analysis or used to directly generate any results. All code was also initially written and run by me directly, with AI assistance only used for debugging or understanding package APIs.
 
 \section{Data}\label{sec:data_appendix}
 
 \subsection{Original Data}
 
-\cite{cnfdb} \textbf{Fire Data:}
+\textbf{Fire Data:}\cite{cnfdb}
 \begin{itemize}
     \item \texttt{NFDBFIREID}, \texttt{FIRE\_ID}, \texttt{FIRENAME}: unique identifiers and name
     \item \texttt{SRC\_AGENCY}, \texttt{NAT\_PARK}: reporting agency and park indicator
@@ -27,7 +30,7 @@ ChatGPT was used at various points in this study for finding relevant sources, d
     \item \texttt{FID}, \texttt{the\_geom}: internal ID and geometry
 \end{itemize}
 
-\cite{evacdb} \textbf{Evacuation Data:}
+\textbf{Evacuation Data:}\cite{evacdb}
 \begin{itemize}
     \item \texttt{EvacID}: unique evacuation identifier
     \item \texttt{Year}, \texttt{Province}, \texttt{Region}: temporal and geographic context
@@ -42,7 +45,7 @@ ChatGPT was used at various points in this study for finding relevant sources, d
     \item \texttt{matched}: indicator for linkage to fire dataset
 \end{itemize}
 
-\cite{reservesdb} \textbf{First Nations Reserve Data:}
+\textbf{First Nations Reserve Data:}\cite{reservesdb}
 \begin{itemize}
     \item \texttt{geometry}: spatial polygon defining reserve boundaries
     \item \texttt{NAME1}–\texttt{NAME5}, \texttt{LANGUAGE1}–\texttt{LANGUAGE5}: reserve names in multiple languages
@@ -77,7 +80,24 @@ Finally, categorical variables were simplified and standardised to provide a sma
 
 \section{Sensitivity Analysis}\label{sec:sensitivity_analysis}
 
-Sensitivity analysis was done only on the Province model with 3 different prior parameter settings for reasons of computational cost. The results are summarised in Table XX below.
+Sensitivity analysis was done only on the Province model with three different prior parameter settings for reasons of computational cost. ELPD and parameter means and standard deviations are reported in Table~\ref{tab:sensitivity_appendix_results}. Three configurations were tested: (1) halving all prior variances (2) baseline values (3) doubling all variances.
+
+We see that the double has the best fit with the highest ELPD, but the baseline is close and halving is not far behind either. Unsurprisingly, with higher variances we get less regularisation and so the parameters increase in magnitude. However, the qualitative meaning of the parameters is the same: there are no big jumps. Further, the main parameter of interest ($\beta_{\text{fn}}$) is stable between the baseline and double model only increasing from 1.213 to 1.258. I thus conclude that, while the prior variance can dictate the magnitude of the parameters to some extent, it is unlikely to qualitatively change the nature of the findings, and that ($\beta_{\text{fn}}$) may be fairly robust.
+
+\begin{table}[h!]
+  \centering
+  \caption{Province-model prior sensitivity results. For $\alpha$ and $\beta_{\mathrm{fn}}$, values are shown as posterior mean with posterior SD in subscript.}
+  \label{tab:sensitivity_appendix_results}
+  \begin{tabular}{lccc}
+    \hline
+    Configuration & ELPD & $\alpha$ & $\beta_{\mathrm{fn}}$ \\
+    \hline
+    Half & $-2023.4$ & $-3.81_{\pm 0.176}$ & $1.086_{\pm 0.204}$ \\
+    Baseline & $-2019.1$ & $-4.06_{\pm 0.31}$ & $1.213_{\pm 0.205}$ \\
+    Double & $-2018.1$ & $-4.35_{\pm 0.59}$ & $1.258_{\pm 0.209}$ \\
+    \hline
+  \end{tabular}
+\end{table}
 
 \section{Example Stan Code}\label{sec:stan_code}
 

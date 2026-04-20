@@ -1,5 +1,5 @@
 \section{Probabilistic Modelling and Inference}\label{sec:modelling}
-\subsection{Logistic Regression}\label{sec:first_model}
+\subsection{Bayesian Logistic Regression}\label{sec:first_model}
 I use a series of increasingly complex logistic regression models, each of the following form:
 \[
 \theta_i
@@ -64,11 +64,11 @@ p(\mathbf{u}) \propto
 \sum_{(r,s)\in E} (u_r - u_s)^2
 \right),
 \]
-
-\textbf{Diagnostics}: I inspected trace and rank plots for the MCMC models. An example (full model, parameters $\alpha$ and $\beta_{\mathrm{fn}}$) is shown in Appendix~\ref{sec:trace_and_rank_plots}, Figure~\ref{fig:full_trace_rank}. I also ensured that $\hat{R}\approx 1$ for all parameter values indicating that all chains agree, and found that the effective sample size (ESS) was over 700 for all parameters on all models in both tail and bulk, with most values between 1000 and 3000, indicating good convergence. I ran posterior predictive checks (PPC) for each model, verifying that a credible interval over the total number of evacuations is consistent with the data. These can be seen below in Table~\ref{tab:model_comparison_loo}. Finally, I ran a brief sensitivity analysis on the prior parameters for the Province model in Appendix~\ref{sec:sensitivity_analysis} which indicated that parameter means were stable across priors.
+\subsection{Diagnostics}
+I inspected trace and rank plots for all MCMC models. An example for the Full model with parameters $\alpha$ and $\beta_{\mathrm{fn}}$ is shown in Appendix~\ref{sec:trace_and_rank_plots}, Figure~\ref{fig:full_trace_rank}. I also ensured that $\hat{R}\approx 1$ for all parameter values indicating that all chains agree, and found that the effective sample size (ESS) was over 700 for all parameters on all models in both tail and bulk, with most values between 1000 and 3000, indicating good convergence. I ran posterior predictive checks (PPC) for each model, verifying that a credible interval (CI) over the total number of evacuations is consistent with the data. These can be seen below in Table~\ref{tab:model_comparison_loo}. Finally, I ran a brief sensitivity analysis on the variances of the priors for the Province model in Appendix~\ref{sec:sensitivity_analysis} which indicated that parameter means were stable enough across priors to leave the conclusions unchanged.
 
 \subsection{Model Comparison}\label{sec:model_comparison}
-I compare the nested logistic models using Leave-one-out (LOO) expected log predictive density (ELPD). That is, $\text{ELPD} = \sum_{i=1}^{N} \log p(y_i | y_{-i})$. Higher ELPD indicates better out-of-sample predictive performance. Table~\ref{tab:model_comparison_loo} reports ELPD with its standard error (SE), the ELPD difference from the best model, the standard error of that difference (DSE) and a 95\% credible interval (CI) for total number of evacs. All Pareto-k values used for estimation of the ELPD were in the 'good' category ($<0.7$) indicating stability of the estimation.
+I compare the nested logistic models using Leave-one-out (LOO) expected log predictive density (ELPD). That is, $\text{ELPD} = \sum_{i=1}^{N} \log p(y_i | y_{-i})$. Higher ELPD indicates better out-of-sample predictive performance. Table~\ref{tab:model_comparison_loo} reports ELPD with its standard error (SE), the ELPD difference from the best model, the standard error of that difference (DSE) and a 95\% quantile-based CI for total number of evacs. All Pareto-k values used for estimation of the ELPD were in the 'good' category ($<0.7$) indicating stability of the estimation.
 
 \begin{table}[h!]
 \centering
