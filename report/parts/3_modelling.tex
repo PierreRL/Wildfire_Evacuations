@@ -1,23 +1,92 @@
 \section{Probabilistic Modelling and Inference}\label{sec:modelling}
 \subsection{Logistic Regression}\label{sec:first_model}
-I test each of the following models of increasing complexity.
-\textbf{A Minimal Model:}
-\[\theta_i
+I use a series of increasingly complex logistic regression models, each of the following form:
+\[
+\theta_i
 =
 \alpha
-+ \beta_{\text{size}} \, \log(\text{fire\_size}_i)
-+ \beta_{\text{fn}} \, \text{fn\_indicator}_i,
++ \mathbf{\alpha}_{\mathrm{cat}}(\mathbf{c}_i)
++ \boldsymbol{\beta}^\top \mathbf{x}_i,
 \qquad
-y_i \sim \mathrm{Bernoulli}\!\left(\mathrm{logistic}(\theta_i)\right)\]
-\textbf{Provinces:}
-\textbf{Responses:}
-\textbf{Spatial Effects:}
-\textbf{Diagnostics}: I ran posterior predictive checks (PPC) for every model above, verifying that a credible interval over the  total number of evacuations is consistent with the data. These can be seen below in Table YY. Trace plots and rank plots all indicated fast mixing and a well explored posterior, which can be found in Appendix XX. All Pareto-k values were in the 'good' for the LOO sampling done by arviz for model comparison purposes.
+y_i \sim \mathrm{Bernoulli}\!\left(\mathrm{logistic}(\theta_i)\right)
+\]
+with priors
+\[
+\alpha_{\mathrm{cat}}(j) \sim \mathcal{N}(0,1) \quad \forall \, j\in \mathrm{cat}, \qquad 
+\boldsymbol{\beta} \sim \mathcal{N}(0,1), \qquad
+c \sim \mathcal{N}(0,2)
+\]
+where \(\mathbf{x}_i\) denotes continuous covariates and \(\mathbf{\alpha}_{\mathrm{cat}}(\mathbf{c}_i)\) denotes the contribution of categorical variables (e.g.\ province or protection zone), $j$ is a value for a given category $\mathrm{cat}$, and $c$ is the intercept. Priors were chosen to have full support with slightly more variation for $c$ to allow for a low baseline evacuation probability. A hierarchical model could have been employed with, but I found this increased computational complexity while $N=15,203$ was sufficient to estimate separate category effects directly. Below, I state the changes of each subsequent model to the previous as they are a series of nested models.\\
+\textbf{Minimal:} only fire size and whether the fire is on a FN reserve.
+\[
+\mathbf{x}_i = \big(\log \text{fire\_size},\ \text{fn\_indicator}_i\big),
+\qquad
+\mathbf{\alpha}_{\mathrm{cat}}(\mathbf{c}_i) = 0
+\]
+
+\textbf{Provinces:} add provinces to the categorical variables.
+\[
+\mathbf{\alpha}_{\mathrm{cat}}(\mathbf{c}_i) = \alpha_{\mathrm{prov}[i]}
+\]
+
+\textbf{Full:} add distance to nearest FN reserve and the protection zone variables.
+\[
+\mathbf{x}_i = \big(\log \text{fire\_size},\ \text{log\_dist\_to\_fn}_i,\ \text{fn\_indicator}_i\big),
+\qquad
+\mathbf{\alpha}_{\mathrm{cat}}(\mathbf{c}_i)
+=
+\alpha_{\mathrm{prov}[i]} + \alpha_{\mathrm{prot}[i]}
+\]
+
+\textbf{Responses:} add the response type to the categorical variables.
+\[
+\mathbf{\alpha}_{\mathrm{cat}}(\mathbf{c}_i)
+=
+\alpha_{\mathrm{prov}[i]} + \alpha_{\mathrm{prot}[i]} + \alpha_{\mathrm{resp}[i]}
+\]
+
+\textbf{Spatial (VI):} remove response type and add region. This model was too computationally expensive to run inference using MCMC thus I used variational inference (VI) to approximate the posterior using the default cmdstanpy parameters ('meanfield' algorithm, independence assumption).
+
+\[
+\mathbf{x}_i = \big(\log(\text{fire\_size}_i),\ \text{log\_dist\_to\_fn}_i,\ \text{fn\_indicator}_i\big),
+\qquad
+\mathbf{\alpha}_{\mathrm{cat}}(\mathbf{c}_i)
+=
+\alpha_{\mathrm{prov}[i]} + \alpha_{\mathrm{prot}[i]} + u_{\mathrm{region}[i]}.
+\]
+with a spatial prior imposed on \(u_{\mathrm{region}}\). Let $E$ denotes the set of neighbouring regions. The prior imposes the belief that neighbouring regions have related rates of evacuations.
+\[
+u_{\mathrm{region}} \sim \mathcal{N}(0,1), \qquad
+\sum_{r=1}^R u_r = 0, \qquad
+p(\mathbf{u}) \propto
+\exp\left(
+-\frac{1}{2\sigma_{\mathrm{region}}^2}
+\sum_{(r,s)\in E} (u_r - u_s)^2
+\right),
+\]
+
+\textbf{Diagnostics}: I inspected trace and rank plots for the MCMC models. An example (full model, parameters $\alpha$ and $\beta_{\mathrm{fn}}$) is shown in Appendix~\ref{sec:trace_and_rank_plots}, Figure~\ref{fig:full_trace_rank}. I also ensured that $\hat{R}\approx 1$ for all parameter values indicating that all chains agree, and found that the effective sample size (ESS) was over 700 for all parameters on all models in both tail and bulk, with most values between 1000 and 3000, indicating good convergence. I ran posterior predictive checks (PPC) for each model, verifying that a credible interval over the total number of evacuations is consistent with the data. These can be seen below in Table~\ref{tab:model_comparison_loo}. Finally, I ran a brief sensitivity analysis on the prior parameters for the Province model in Appendix~\ref{sec:sensitivity_analysis} which indicated that parameter means were stable across priors.
+
 \subsection{Model Comparison}\label{sec:model_comparison}
-Comparison
-Model LOO alpha, beta\_fn, 
+I compare the nested logistic models using Leave-one-out (LOO) expected log predictive density (ELPD). That is, $\text{ELPD} = \sum_{i=1}^{N} \log p(y_i | y_{-i})$. Higher ELPD indicates better out-of-sample predictive performance. Table~\ref{tab:model_comparison_loo} reports ELPD with its standard error (SE), the ELPD difference from the best model, the standard error of that difference (DSE) and a 95\% credible interval (CI) for total number of evacs. All Pareto-k values used for estimation of the ELPD were in the 'good' category ($<0.7$) indicating stability of the estimation.
 
-More detailed analysis of coefficients can be found in Section~\ref{sec:results}.
+\begin{table}[h!]
+\centering
+\caption{Model comparison using LOO ELPD.}
+\label{tab:model_comparison_loo}
+\begin{tabular}{lrrrr}
+\hline
+Model & ELPD $\pm$ SE & ELPD diff & DSE & Mean total evacs [95\% CI]  \\
+\hline
+Response & \textbf{-1865} $\pm$ 63.0 & 0.0 & 0.0 & 532 [475, 593] \\
+Spatial (VI) & -1868 $\pm$ 63.3 & 2.8 & 9.2 & 538 [448, 636] \\
+Full & -1871 $\pm$ 63.1 & 5.6 & 3.5 & 532 [473, 592] \\
+Province & -2019 $\pm$ 66.5 & 154.0 & 17.6 & 532 [471, 595] \\
+Minimal & -2247 $\pm$ 73.8 & 381.8 & 28.8 & 532 [472, 595] \\
+\hline
+\end{tabular}
+\end{table}
 
-\subsection{Variational Inference}
-The most complex model was computationally expensive to run inference on. Thus I also ran variational inference on this
+All models posterior CI's for the total number of evacuations are sensible, with the true value at $531$. Note the Spatial model with VI has a wider CI interval and mean slightly farther than the rest from the true value. Response gives the best ELPD, while Spatial (VI) and Full are close with differences only 1 or 2 SEs apart. There is a large and meaningful gap between Province and the top three models, and an even larger one between Minimal and the rest.
+
+% More detailed analysis of coefficients can be found in Section~\ref{sec:results}.

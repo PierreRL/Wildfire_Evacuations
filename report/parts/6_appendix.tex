@@ -1,11 +1,11 @@
 \appendix
 \section*{Appendix}
 \addcontentsline{toc}{section}{Appendix}
-\section{Positionality Statement}
+\section{Positionality and Land Acknowledgement Statement}
 I am a white male settler...
 
 \section{AI Usage Statement}
-ChatGPT was used at various points in this study for finding relevant sources, debugging code, suggesting modelling ideas and code for generating plots. It was not used for writing, analysis or used to directly generate any results.
+ChatGPT was used at various points in this study for finding relevant sources, debugging code, suggesting modelling ideas and code for generating plots. It was not used for writing, analysis or used to directly generate any results. All code was also initially written and run by me directly, with AI assistance only used for debugging or understanding library API's.
 
 \section{Data}\label{sec:data_appendix}
 
@@ -59,10 +59,72 @@ ChatGPT was used at various points in this study for finding relevant sources, d
 
 Fire and evacuation records were linked using a nearest-neighbour heuristic in both time and space. For each evacuation, candidate fires were restricted to those reported within a $\pm14$ day window of the evacuation issue date, and the closest such fire (in geodesic distance) was selected, provided it lay within 100\,km. Evacuations without a valid match under these criteria were discarded, resulting in approximately three quarters of evacuations being retained. However, this introduces potential bias: unmatched evacuations were disproportionately associated with First Nations reserves, so their removal may attenuate estimated effects related to Indigenous proximity. This is a limitation of this matching method that could be investigated by further work.
 
-Geospatial joins were then used to augment fire records with First Nations reserve features. Fires were tagged with a binary \texttt{fn\_indicator} based on whether their location intersected a reserve polygon, and continuous measures such as \texttt{dist\_to\_fn\_km} (distance to the nearest reserve) and \texttt{n\_fn\_20km} (count of reserves within a 20\,km radius) were computed using projected geometries.
+Geospatial joins were then used to augment fire records with First Nations reserve features. Fires were tagged with a binary \texttt{fn\_indicator} based on whether their location intersected a reserve polygon, and continuous measures such as \texttt{log\_dist\_to\_fn\_km} (distance to the nearest reserve) and \texttt{n\_fn\_20km} (count of reserves within a 20\,km radius) were computed using projected geometries.
 
 The resulting fire-level dataset was aggregated so that multiple evacuations linked to the same fire contributed summary statistics (e.g. counts, total population, and mean match distance), and missing values for unmatched fires were filled with zeros or \texttt{False} as appropriate.
 
-Finally, categorical variables were simplified and standardised, continuous variables (notably fire size) were log-transformed and normalised, and irrelevant fields were removed. Three rows causing numerical instability in posterior inference (due to near-deterministic predictions) were excluded as a pragmatic step.
+Finally, categorical variables were simplified and standardised to provide a smaller number of categories, continuous variables (fire size and distance to nearest FN reserve) were log-transformed and normalised, and irrelevant fields were removed. Three rows causing numerical instability in posterior inference (due to near-deterministic predictions) were excluded as a pragmatic step.
 
-\section{Trace \& Rank Plots}
+\section{Trace \& Rank Plots}\label{sec:trace_and_rank_plots}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figures/full_trace_alpha_beta_fn.png}\\[0.8em]
+    \includegraphics[width=0.92\textwidth]{figures/full_rank_alpha_beta_fn.png}
+    \caption{Full-model MCMC diagnostics for parameters $\alpha$ and $\beta_{\mathrm{fn}}$: trace plots (top) and rank plots (bottom). Plots indicate fast mixing and stable estimations of parameter values.}
+    \label{fig:full_trace_rank}
+\end{figure}
+
+\section{Sensitivity Analysis}\label{sec:sensitivity_analysis}
+
+Sensitivity analysis was done only on the Province model with 3 different prior parameter settings for reasons of computational cost. The results are summarised in Table XX below.
+
+\section{Example Stan Code}\label{sec:stan_code}
+
+Below is the Stan code used for the Minimal model. Note that full code for all models, compilation and analysis can be found on Github\footnote{https://github.com/PierreRL/Wildfire\_Evacuations}.
+\begin{verbatim}
+data {
+  int<lower=1> N;
+  array[N] int<lower=0, upper=1> y;
+  vector[N] log_fire_size;
+  array[N] int<lower=0, upper=1> fn_indicator;
+}
+
+parameters {
+  real alpha;
+  real beta_log_fire_size;
+  real beta_fn;
+}
+
+model {
+  vector[N] theta;
+
+  // Priors
+  alpha ~ normal(0, 2);
+  beta_log_fire_size ~ normal(0, 1);
+  beta_fn ~ normal(0, 1);
+
+  for (n in 1:N) {
+    theta[n] = alpha
+             + beta_log_fire_size * log_fire_size[n]
+             + beta_fn * fn_indicator[n];
+  }
+
+  // Likelihood
+  y ~ bernoulli_logit(theta);
+}
+
+generated quantities {
+  vector[N] log_lik;
+  array[N] int y_rep;
+
+  for (n in 1:N) {
+    real theta_n = alpha
+                   + beta_log_fire_size * log_fire_size[n]
+                   + beta_fn * fn_indicator[n];
+    log_lik[n] = bernoulli_logit_lpmf(y[n] | theta_n);
+    y_rep[n] = bernoulli_logit_rng(theta_n);
+  }
+}
+\end{verbatim}
+
