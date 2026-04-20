@@ -14,9 +14,9 @@ with priors
 \[
 \alpha_{\mathrm{cat}}(j) \sim \mathcal{N}(0,1) \quad \forall \, j\in \mathrm{cat}, \qquad 
 \boldsymbol{\beta} \sim \mathcal{N}(0,1), \qquad
-c \sim \mathcal{N}(0,2)
+\alpha \sim \mathcal{N}(0,2)
 \]
-where \(\mathbf{x}_i\) denotes continuous covariates and \(\mathbf{\alpha}_{\mathrm{cat}}(\mathbf{c}_i)\) denotes the contribution of categorical variables (e.g.\ province or protection zone), $j$ is a value for a given category $\mathrm{cat}$, and $c$ is the intercept. Priors were chosen to have full support with slightly more variation for $c$ to allow for a low baseline evacuation probability. A hierarchical model could have been employed with, but I found this increased computational complexity while $N=15,203$ was sufficient to estimate separate category effects directly. Below, I state the changes of each subsequent model to the previous as they are a series of nested models.\\
+where \(\mathbf{x}_i\) denotes continuous covariates and \(\mathbf{\alpha}_{\mathrm{cat}}(\mathbf{c}_i)\) denotes the contribution of categorical variables (e.g.\ province or protection zone), $j$ is a value for a given category $\mathrm{cat}$, and $\alpha$ is the intercept. Priors were chosen to have full support with slightly more variation for $\alpha$ to allow for a low baseline evacuation probability. A hierarchical model could have been employed but I found this increased computational complexity while $N=15,203$ was sufficient to estimate separate category effects directly. Below, I only state the changes relative to the previous for simplicity.\\
 \textbf{Minimal:} only fire size and whether the fire is on a FN reserve.
 \[
 \mathbf{x}_i = \big(\log \text{fire\_size},\ \text{fn\_indicator}_i\big),
@@ -87,6 +87,6 @@ Minimal & -2247 $\pm$ 73.8 & 381.8 & 28.8 & 532 [472, 595] \\
 \end{tabular}
 \end{table}
 
-All models posterior CI's for the total number of evacuations are sensible, with the true value at $531$. Note the Spatial model with VI has a wider CI interval and mean slightly farther than the rest from the true value. Response gives the best ELPD, while Spatial (VI) and Full are close with differences only 1 or 2 SEs apart. There is a large and meaningful gap between Province and the top three models, and an even larger one between Minimal and the rest.
+All models posterior CIs for the total number of evacuations are sensible, with the true value at $531$. Note the Spatial model with VI has a wider CI interval and mean slightly farther than the rest from the true value. Response gives the best ELPD, while Spatial (VI) and Full are close with differences only 1–2 SEs apart. There is a large and meaningful gap between Province and the top three models, and an even larger one between Minimal and the rest.
 
 % More detailed analysis of coefficients can be found in Section~\ref{sec:results}.
